@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "Tab Management",
-  "version": "1.6.2",
-  "description": "Press Alt+Shift+D to duplicate the current tab (Option+Shift+D on Mac). Shortcut is configurable.",
+  "version": "1.6.4",
+  "description": "Press Ctrl+Alt+D to duplicate the current tab, or press Ctrl+Alt+P to pin it.",
   "homepage_url": "https://github.com/mattgauf/ff-duplicate-tab",
   "author": "Matt Gauf",
   "icons": {

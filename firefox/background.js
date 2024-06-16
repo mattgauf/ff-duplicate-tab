@@ -60,119 +60,26 @@ browser.commands.onCommand.addListener(async command => {
       await browser.tabs.update(tabToActivate.id, { highlighted: false });
       await browser.tabs.update(tabToActivate.id, { highlighted: true });
     }
-  } else if (command == 'duplicate-to-new-window') {
-    const options = await browser.storage.sync.get(default_options);
-    const currentWindow = await browser.windows.getCurrent();
+  } else if (command == 'toggle-pinned-tab') {
     const tabs = await browser.tabs.query({
       currentWindow: true,
-      highlighted: true,
+      active: true,
     });
-
-    // Duplicate and move new tabs to a new window
-    let newWindow;
-    const newTabs = [];
-    const tabsToActivate = [];
-    for (const tab of tabs) {
-      const newTab = await browser.tabs.duplicate(tab.id);
-      newTabs.push(newTab);
-      if (newWindow) {
-        await browser.tabs.move(newTab.id, {
-          windowId: newWindow.id,
-          index: -1,
-        });
-      } else {
-        newWindow = await browser.windows.create({
-          type: currentWindow.type,
-          incognito: currentWindow.incognito,
-          tabId: newTab.id, // This removes the tab from the old window
-          focused: !options.background,
-        });
-        if (options.background) {
-          // Firefox bug: doesn't respect the "focused: false" attribute in browser.windows.create, so manually focus the old window again
-          await browser.windows.update(currentWindow.id, {
-            focused: true,
-          });
-        }
-      }
+    if (tabs.length === 1) {
+      const tab = tabs[0];
       if (tab.pinned) {
-        await browser.tabs.update(newTab.id, { pinned: true });
-      }
-      if (tab.active) {
-        tabsToActivate.push(tab);
-        tabsToActivate.push(newTab);
-      }
-    }
-
-    // Highlight tabs
-    for (const tab of tabs) {
-      await browser.tabs.update(tab.id, { highlighted: true });
-    }
-    for (const tab of newTabs) {
-      await browser.tabs.update(tab.id, { highlighted: true });
-    }
-    for (const tabToActivate of tabsToActivate) {
-      await browser.tabs.update(tabToActivate.id, { highlighted: false });
-      await browser.tabs.update(tabToActivate.id, { highlighted: true });
-    }
-  } else if (command == 'pop-out-to-new-window') {
-    const options = await browser.storage.sync.get(default_options);
-    const currentWindow = await browser.windows.getCurrent();
-    const tabs = await browser.tabs.query({
-      currentWindow: true,
-      highlighted: true,
-    });
-    const activeTab = tabs.find(t => t.active);
-
-    // Move tabs to a new window
-    let newWindow;
-    for (const tab of tabs) {
-      if (newWindow) {
-        await browser.tabs.move(tab.id, {
-          windowId: newWindow.id,
-          index: -1,
-        });
+        await browser.tabs.update(tab.id, { pinned: false });
       } else {
-        newWindow = await browser.windows.create({
-          type: currentWindow.type,
-          incognito: currentWindow.incognito,
-          tabId: tab.id, // This removes the tab from the old window
-          focused: !options.background,
-        });
-        if (options.background) {
-          // Firefox bug: doesn't respect the "focused: false" attribute in browser.windows.create, so manually focus the old window again
-          await browser.windows.update(currentWindow.id, {
-            focused: true,
-          });
-        }
-      }
-      if (tab.pinned) {
         await browser.tabs.update(tab.id, { pinned: true });
       }
-    }
-
-    // Highlight tabs
-    for (const tab of tabs) {
-      await browser.tabs.update(tab.id, { highlighted: true });
-    }
-    await browser.tabs.update(activeTab.id, { active: true });
-  } else if (command == 'new-tab-to-the-right') {
-    const [tab] = await browser.tabs.query({
-      currentWindow: true,
-      active: true,
-    });
-    const newTab = await browser.tabs.create({
-      active: true,
-      pinned: tab.pinned,
-      index: tab.index + 1,
-      openerTabId: tab.id,
-    });
-    if (tab.groupId !== -1 && newTab.groupId === -1) {
-      // This is only needed when performing the action on the right-most tab of a group
-      // When used on other tabs in the group, the new tab is automatically grouped
-      browser.tabs.group({
-        groupId: tab.groupId,
-        tabIds: [newTab.id],
-      });
+    } else {
+      for (const tab of tabs) {
+        if (tab.pinned) {
+          await browser.tabs.update(tab.id, { pinned: false });
+        } else {
+          await browser.tabs.update(tab.id, { pinned: true });
+        }
+      }
     }
   }
 });
